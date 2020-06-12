@@ -18,33 +18,96 @@ Function to Return Parsed Data from NHL API
 ===========================================
 
 ``` r
-getf <- function() {
-  f<-GET("https://records.nhl.com/site/api/franchise")
-  f<-content(f, "text")
-  f<-fromJSON(f,flatten=TRUE)
-  f<-data.frame(f)
-  f<-tbl_df(f)
-  f <- f %>% select(id = data.id, firstSeasonId = data.firstSeasonId, lastSeasonID = data.lastSeasonId,
-                    teamName = data.teamCommonName)
-  return(f)
+getNHL <- function(str1=NULL, id=NULL) {
+  if (is.null(str1)){
+    return("Please enter desired data and Franchise ID (if applicable)")
+  } 
+  else
+  s1<-stri_compare(str1, "franchise")
+  if (s1==0){
+    f<-GET("https://records.nhl.com/site/api/franchise")
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    f <- f %>% select(data.id, data.firstSeasonId, data.lastSeasonId, data.teamCommonName)
+    return(f)
+  }
+  else
+  s2<-stri_compare(str1, "teamtotals")
+  if (s2==0){
+    f<-GET("https://records.nhl.com/site/api/franchise-team-totals")
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }
+  else
+  s3<-stri_compare(str1, "seasonrecs")
+  s4<-stri_compare(str1, "goalierecs")
+  s5<-stri_compare(str1, "skaterrecs")
+  if ((s3==0 | s4==0 | s5==0) & is.null(id)){
+    return("Please enter a Franchise ID in the second argument.")
+  }
+  else
+  `%notin%` <- Negate(`%in%`)
+  if ((s3==0 | s4==0 | s5==0) & id %notin% 1:38){
+    return("Franchise ID not recognized.")
+  }  
+  else
+  if (s3==0 & id %in% 1:38){
+    f<-GET(paste0("https://records.nhl.com/site/api/franchise-season-records?cayenneExp=franchiseId=", id))
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }
+  else
+  if (s4==0 & id %in% 1:38){
+    f<-GET(paste0("https://records.nhl.com/site/api/franchise-goalie-records?cayenneExp=franchiseId=", id))
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }
+  else
+  if (s5==0 & id %in% 1:38){
+    f<-GET(paste0("https://records.nhl.com/site/api/franchise-skater-records?cayenneExp=franchiseId=", id))
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }  
 }
 
-getf()[1:10,]
+getNHL("goalierecs", 38)
 ```
 
-    ## # A tibble: 10 x 4
-    ##       id firstSeasonId lastSeasonID teamName   
-    ##    <int>         <int>        <int> <chr>      
-    ##  1     1      19171918           NA Canadiens  
-    ##  2     2      19171918     19171918 Wanderers  
-    ##  3     3      19171918     19341935 Eagles     
-    ##  4     4      19191920     19241925 Tigers     
-    ##  5     5      19171918           NA Maple Leafs
-    ##  6     6      19241925           NA Bruins     
-    ##  7     7      19241925     19371938 Maroons    
-    ##  8     8      19251926     19411942 Americans  
-    ##  9     9      19251926     19301931 Quakers    
-    ## 10    10      19261927           NA Rangers
+    ## # A tibble: 7 x 30
+    ##   data.id data.activePlay~ data.firstName data.franchiseId data.franchiseN~
+    ##     <int> <lgl>            <chr>                     <int> <chr>           
+    ## 1     279 TRUE             Marc-Andre                   38 Vegas Golden Kn~
+    ## 2     285 TRUE             Maxime                       38 Vegas Golden Kn~
+    ## 3     286 TRUE             Oscar                        38 Vegas Golden Kn~
+    ## 4     287 TRUE             Malcolm                      38 Vegas Golden Kn~
+    ## 5     288 TRUE             Dylan                        38 Vegas Golden Kn~
+    ## 6    1292 TRUE             Garret                       38 Vegas Golden Kn~
+    ## 7    1298 TRUE             Robin                        38 Vegas Golden Kn~
+    ## # ... with 25 more variables: data.gameTypeId <int>,
+    ## #   data.gamesPlayed <int>, data.lastName <chr>, data.losses <int>,
+    ## #   data.mostGoalsAgainstDates <chr>, data.mostGoalsAgainstOneGame <int>,
+    ## #   data.mostSavesDates <chr>, data.mostSavesOneGame <int>,
+    ## #   data.mostShotsAgainstDates <chr>, data.mostShotsAgainstOneGame <int>,
+    ## #   data.mostShutoutsOneSeason <int>, data.mostShutoutsSeasonIds <chr>,
+    ## #   data.mostWinsOneSeason <int>, data.mostWinsSeasonIds <chr>,
+    ## #   data.overtimeLosses <int>, data.playerId <int>,
+    ## #   data.positionCode <chr>, data.rookieGamesPlayed <int>,
+    ## #   data.rookieShutouts <int>, data.rookieWins <int>, data.seasons <int>,
+    ## #   data.shutouts <int>, data.ties <int>, data.wins <int>, total <int>
 
 Using the Function
 ------------------

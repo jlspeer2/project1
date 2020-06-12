@@ -14,6 +14,7 @@ library("jsonlite")
 library("tidyverse")
 library("tidyr")
 library("dplyr")
+library("stringi")
 ```
 
 
@@ -24,18 +25,73 @@ library("dplyr")
 # Function to Return Parsed Data from NHL API
 
 ```{r, echo=TRUE, message=FALSE}
-getf <- function() {
-  f<-GET("https://records.nhl.com/site/api/franchise")
-  f<-content(f, "text")
-  f<-fromJSON(f,flatten=TRUE)
-  f<-data.frame(f)
-  f<-tbl_df(f)
-  f <- f %>% select(id = data.id, firstSeasonId = data.firstSeasonId, lastSeasonID = data.lastSeasonId,
-                    teamName = data.teamCommonName)
-  return(f)
+getNHL <- function(str1=NULL, id=NULL) {
+  if (is.null(str1)){
+    return("Please enter desired data and Franchise ID (if applicable)")
+  } 
+  else
+  s1<-stri_compare(str1, "franchise")
+  if (s1==0){
+    f<-GET("https://records.nhl.com/site/api/franchise")
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    f <- f %>% select(data.id, data.firstSeasonId, data.lastSeasonId, data.teamCommonName)
+    return(f)
+  }
+  else
+  s2<-stri_compare(str1, "teamtotals")
+  if (s2==0){
+    f<-GET("https://records.nhl.com/site/api/franchise-team-totals")
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }
+  else
+  s3<-stri_compare(str1, "seasonrecs")
+  s4<-stri_compare(str1, "goalierecs")
+  s5<-stri_compare(str1, "skaterrecs")
+  if ((s3==0 | s4==0 | s5==0) & is.null(id)){
+    return("Please enter a Franchise ID in the second argument.")
+  }
+  else
+  `%notin%` <- Negate(`%in%`)
+  if ((s3==0 | s4==0 | s5==0) & id %notin% 1:38){
+    return("Franchise ID not recognized.")
+  }  
+  else
+  if (s3==0 & id %in% 1:38){
+    f<-GET(paste0("https://records.nhl.com/site/api/franchise-season-records?cayenneExp=franchiseId=", id))
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }
+  else
+  if (s4==0 & id %in% 1:38){
+    f<-GET(paste0("https://records.nhl.com/site/api/franchise-goalie-records?cayenneExp=franchiseId=", id))
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }
+  else
+  if (s5==0 & id %in% 1:38){
+    f<-GET(paste0("https://records.nhl.com/site/api/franchise-skater-records?cayenneExp=franchiseId=", id))
+    f<-content(f, "text")
+    f<-fromJSON(f,flatten=TRUE)
+    f<-data.frame(f)
+    f<-tbl_df(f)
+    return(f)
+  }  
 }
 
-getf()[1:10,]
+getNHL("goalierecs", 38)
 ```
 
 ## Using the Function
