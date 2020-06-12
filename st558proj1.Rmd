@@ -15,6 +15,7 @@ library("tidyverse")
 library("tidyr")
 library("dplyr")
 library("stringi")
+library("DT")
 ```
 
 
@@ -23,6 +24,32 @@ library("stringi")
 # Reading JSON Data into R
 
 # Function to Return Parsed Data from NHL API
+
+The function that is generated below enables the user to pull several data sets from the NHL API.
+
+**Usage:**
+
+`getNHL(dataset, franchiseID)`
+
+**Arguments:**
+
+`dataset`: Enter `"franchise"`, `"teamtotals"`, `"seasonrecs"`, `"goalierecs"`, or `"skaterrecs"`
+
+`franchiseID`: Valid Franchise ID required for `"seasonrecs"`, `"goalierecs"`, and `"skaterrecs"`
+
+**Datasets:**
+
+`"franchise"`: Returns id, firstSeasonId and lastSeasonId and name of every team in the history of the NHL
+
+`"teamtotals"`: Returns total stats for every franchise (ex roadTies, roadWins, etc)
+
+`"seasonrecs"`: Drill-down into season records for a specific franchise
+
+`"goalierecs"`: Goalie records for the specified franchise
+
+`"skaterrecs"`: (Skater records, same interaction as goalie endpoint
+
+**Function generation:**
 
 ```{r, echo=TRUE, message=FALSE}
 getNHL <- function(str1=NULL, id=NULL) {
@@ -91,7 +118,33 @@ getNHL <- function(str1=NULL, id=NULL) {
   }  
 }
 
-getNHL("goalierecs", 38)
 ```
 
 ## Using the Function
+
+The function can be used to call several NHL data sets from the API. Examples are illustrated below.
+
+```{r, echo=TRUE, message=FALSE}
+#Call Franchise data, select variables
+getNHL("franchise") %>% select(data.firstSeasonId, data.teamCommonName) %>% head(n=10)
+```
+
+```{r, echo=TRUE, message=FALSE}
+#Call Team Totals data, select variables
+getNHL("teamtotals") %>% select(data.teamName, data.homeWins) %>% head(n=10)
+```
+
+```{r, echo=TRUE, message=FALSE}
+#Call Season Records data, select variables
+getNHL("seasonrecs", 38) %>% select(data.franchiseName, data.homeWinStreak)
+```
+
+```{r, echo=TRUE, message=FALSE}
+#Call Goalie Records data, select variables
+getNHL("goalierecs", 38) %>% select(data.firstName, data.lastName, data.wins)
+```
+
+```{r, echo=TRUE, message=FALSE}
+#Call Skater Records data, select variables
+getNHL("skaterrecs", 38) %>% select(data.firstName, data.lastName, data.points) %>% head(n=10)
+```

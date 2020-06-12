@@ -17,6 +17,32 @@ Reading JSON Data into R
 Function to Return Parsed Data from NHL API
 ===========================================
 
+The function that is generated below enables the user to pull several data sets from the NHL API.
+
+**Usage:**
+
+`getNHL(dataset, franchiseID)`
+
+**Arguments:**
+
+`dataset`: Enter `"franchise"`, `"teamtotals"`, `"seasonrecs"`, `"goalierecs"`, or `"skaterrecs"`
+
+`franchiseID`: Valid Franchise ID required for `"seasonrecs"`, `"goalierecs"`, and `"skaterrecs"`
+
+**Datasets:**
+
+`"franchise"`: Returns id, firstSeasonId and lastSeasonId and name of every team in the history of the NHL
+
+`"teamtotals"`: Returns total stats for every franchise (ex roadTies, roadWins, etc)
+
+`"seasonrecs"`: Drill-down into season records for a specific franchise
+
+`"goalierecs"`: Goalie records for the specified franchise
+
+`"skaterrecs"`: (Skater records, same interaction as goalie endpoint
+
+**Function generation:**
+
 ``` r
 getNHL <- function(str1=NULL, id=NULL) {
   if (is.null(str1)){
@@ -83,31 +109,92 @@ getNHL <- function(str1=NULL, id=NULL) {
     return(f)
   }  
 }
-
-getNHL("goalierecs", 38)
 ```
-
-    ## # A tibble: 7 x 30
-    ##   data.id data.activePlay~ data.firstName data.franchiseId data.franchiseN~
-    ##     <int> <lgl>            <chr>                     <int> <chr>           
-    ## 1     279 TRUE             Marc-Andre                   38 Vegas Golden Kn~
-    ## 2     285 TRUE             Maxime                       38 Vegas Golden Kn~
-    ## 3     286 TRUE             Oscar                        38 Vegas Golden Kn~
-    ## 4     287 TRUE             Malcolm                      38 Vegas Golden Kn~
-    ## 5     288 TRUE             Dylan                        38 Vegas Golden Kn~
-    ## 6    1292 TRUE             Garret                       38 Vegas Golden Kn~
-    ## 7    1298 TRUE             Robin                        38 Vegas Golden Kn~
-    ## # ... with 25 more variables: data.gameTypeId <int>,
-    ## #   data.gamesPlayed <int>, data.lastName <chr>, data.losses <int>,
-    ## #   data.mostGoalsAgainstDates <chr>, data.mostGoalsAgainstOneGame <int>,
-    ## #   data.mostSavesDates <chr>, data.mostSavesOneGame <int>,
-    ## #   data.mostShotsAgainstDates <chr>, data.mostShotsAgainstOneGame <int>,
-    ## #   data.mostShutoutsOneSeason <int>, data.mostShutoutsSeasonIds <chr>,
-    ## #   data.mostWinsOneSeason <int>, data.mostWinsSeasonIds <chr>,
-    ## #   data.overtimeLosses <int>, data.playerId <int>,
-    ## #   data.positionCode <chr>, data.rookieGamesPlayed <int>,
-    ## #   data.rookieShutouts <int>, data.rookieWins <int>, data.seasons <int>,
-    ## #   data.shutouts <int>, data.ties <int>, data.wins <int>, total <int>
 
 Using the Function
 ------------------
+
+The function can be used to call several NHL data sets from the API. Examples are illustrated below.
+
+``` r
+#Call Franchise data, select variables
+getNHL("franchise") %>% select(data.firstSeasonId, data.teamCommonName) %>% head(n=10)
+```
+
+    ## # A tibble: 10 x 2
+    ##    data.firstSeasonId data.teamCommonName
+    ##                 <int> <chr>              
+    ##  1           19171918 Canadiens          
+    ##  2           19171918 Wanderers          
+    ##  3           19171918 Eagles             
+    ##  4           19191920 Tigers             
+    ##  5           19171918 Maple Leafs        
+    ##  6           19241925 Bruins             
+    ##  7           19241925 Maroons            
+    ##  8           19251926 Americans          
+    ##  9           19251926 Quakers            
+    ## 10           19261927 Rangers
+
+``` r
+#Call Team Totals data, select variables
+getNHL("teamtotals") %>% select(data.teamName, data.homeWins) %>% head(n=10)
+```
+
+    ## # A tibble: 10 x 2
+    ##    data.teamName       data.homeWins
+    ##    <chr>                       <int>
+    ##  1 New Jersey Devils             783
+    ##  2 New Jersey Devils              74
+    ##  3 New York Islanders            942
+    ##  4 New York Islanders             84
+    ##  5 New York Rangers             1600
+    ##  6 New York Rangers              137
+    ##  7 Philadelphia Flyers           131
+    ##  8 Philadelphia Flyers          1204
+    ##  9 Pittsburgh Penguins          1116
+    ## 10 Pittsburgh Penguins           111
+
+``` r
+#Call Season Records data, select variables
+getNHL("seasonrecs", 38) %>% select(data.franchiseName, data.homeWinStreak)
+```
+
+    ## # A tibble: 1 x 2
+    ##   data.franchiseName   data.homeWinStreak
+    ##   <chr>                             <int>
+    ## 1 Vegas Golden Knights                  8
+
+``` r
+#Call Goalie Records data, select variables
+getNHL("goalierecs", 38) %>% select(data.firstName, data.lastName, data.wins)
+```
+
+    ## # A tibble: 7 x 3
+    ##   data.firstName data.lastName data.wins
+    ##   <chr>          <chr>             <int>
+    ## 1 Marc-Andre     Fleury               91
+    ## 2 Maxime         Lagace                6
+    ## 3 Oscar          Dansk                 3
+    ## 4 Malcolm        Subban               30
+    ## 5 Dylan          Ferguson              0
+    ## 6 Garret         Sparks                0
+    ## 7 Robin          Lehner                3
+
+``` r
+#Call Skater Records data, select variables
+getNHL("skaterrecs", 38) %>% select(data.firstName, data.lastName, data.points) %>% head(n=10)
+```
+
+    ## # A tibble: 10 x 3
+    ##    data.firstName data.lastName data.points
+    ##    <chr>          <chr>               <int>
+    ##  1 Deryk          Engelland              41
+    ##  2 James          Neal                   44
+    ##  3 Ryan           Reaves                 37
+    ##  4 David          Perron                 66
+    ##  5 Jason          Garrison                1
+    ##  6 Luca           Sbisa                  14
+    ##  7 Brayden        McNabb                 40
+    ##  8 Reilly         Smith                 167
+    ##  9 Tomas          Tatar                   6
+    ## 10 Brandon        Pirri                  23
