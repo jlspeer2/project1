@@ -2,16 +2,40 @@
 title: "ST 558 Project 1"
 author: "Jessica Speer"
 date: "June 11, 2020"
-output: rmarkdown::github_document
+output: 
+  rmarkdown::github_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library("httr")
+library("jsonlite")
+library("tidyverse")
+library("tidyr")
+library("dplyr")
 ```
 
 
-```{r cars}
-summary(cars)
+# JSON overview
+
+# Reading JSON Data into R
+
+# Function to Return Parsed Data from NHL API
+
+```{r, echo=TRUE, message=FALSE}
+getf <- function() {
+  f<-GET("https://records.nhl.com/site/api/franchise")
+  f<-content(f, "text")
+  f<-fromJSON(f,flatten=TRUE)
+  f<-data.frame(f)
+  f<-tbl_df(f)
+  f <- f %>% select(id = data.id, firstSeasonId = data.firstSeasonId, lastSeasonID = data.lastSeasonId,
+                    teamName = data.teamCommonName)
+  return(f)
+}
+
+getf()[1:10,]
 ```
 
-test3
+## Using the Function
