@@ -1,0 +1,17 @@
+---
+title: "ST 558 Project 1"
+author: "Jessica Speer"
+date: "June 11, 2020"
+output: rmarkdown::github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+summary(cars)
+```
+
+test2
