@@ -10,12 +10,36 @@ June 11, 2020
 -   [Explore the NHL Data](#explore-the-nhl-data)
     -   [Categorical and Numerical Summaries](#categorical-and-numerical-summaries)
     -   [Boxplots](#boxplots)
+    -   [Column Graphs](#column-graphs)
+    -   [Scatter Plots](#scatter-plots)
 
 JSON overview
 =============
 
+JSON, short for JavaScript Object Notation, is a text format that is commonly used when sending or retrieving data across servers and/or APIs. There are several reasons why JSON is commonly used. For one, JSON is language-indepdent which reduces many issues that can come from using different languages across platforms. JSON is also easily readable by both humans and machines, and it parses cleanly, which is very beneficial when pulling data from sources that may have various formatting and structure. There are plenty of R packages that can assist with reading JSON into R, which are explored in the next section.
+
+References:
+
+<https://www.json.org/json-en.html>
+
+<https://en.wikipedia.org/wiki/JSON>
+
+<https://www.w3schools.com/js/js_json_intro.asp>
+
 Reading JSON Data into R
 ========================
+
+There are three major packages that can be used to read JSON data into R: `rjson`, `RJSONIO`, and `jsonlite`. The packages are similar, especially if using for simple tasks. `RJSONIO` was developed as an alternative to `rjson` due to limitations with speed and bandwidth, however, `rjason` has been improved over time. `jsonlite` started as a fork of `RJSONIO` but the manual (linked below) notes that recent versions have been completely rewritten.
+
+For this project, I chose `jsonlite` because I have had experience with it before, and because they specifically mention powerful capability to interact with a web API.
+
+References:
+
+<https://cran.r-project.org/web/packages/rjson/rjson.pdf>
+
+<https://cran.r-project.org/web/packages/RJSONIO/index.html>
+
+<https://cran.r-project.org/web/packages/jsonlite/jsonlite.pdf>
 
 Function to Return Parsed Data from NHL API
 ===========================================
@@ -306,6 +330,11 @@ g
 
 It appears that the at/above avg win ratio group may have had more of a home field advantage than the below avg win ratio group, who's boxplot distributions are closer together between home wins and home losses.
 
+Column Graphs
+-------------
+
+We will now use the Goalie Records data set to demonstrate a column graph. For simplicty, we will limit to the Boston Bruins and to the goalies who have played 200 or more games. We will graph the total number of shut outs for each goalie.
+
 ``` r
 rm(t)
 f<-getNHL("goalierecs", 6)
@@ -315,6 +344,13 @@ g
 ```
 
 ![](st558proj1_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+The column graph is a nice way to get an overall sense of this data. We can see that of these goalies (who have played 200 or more games), Thomspon has the most shut outs, followed by Rask and Brimsek.
+
+Scatter Plots
+-------------
+
+Finally, we will explore the Skater Records data to demonstrate scatter plots. We will plot assists vs. goals, split by active status (active=TRUE or FALSE). First, we will overlay using different colors, then we will split them out using `facet_wrap`.
 
 ``` r
 s<-getNHL("skaterrecs", 6)
@@ -331,3 +367,5 @@ g
 ```
 
 ![](st558proj1_files/figure-markdown_github/unnamed-chunk-16-2.png)
+
+As expected, the number of assists appear to be correlated with number of goals. The patterns seem to follow similarly for both groups.
