@@ -15,8 +15,8 @@ library("tidyverse")
 library("tidyr")
 library("dplyr")
 library("stringi")
-library("DT")
 library("ggplot2")
+library("plyr")
 ```
 
 
@@ -125,43 +125,82 @@ getNHL <- function(str1=NULL, id=NULL) {
 
 The function can be used to call several NHL data sets from the API. Examples are illustrated below.
 
+**Call Franchise data, select variables**
+
 ```{r, echo=TRUE, message=FALSE}
-#Call Franchise data, select variables
 getNHL("franchise") %>% select(data.firstSeasonId, data.teamCommonName) %>% head(n=10)
 ```
 
+**Call Team Totals data, select variables**
+
 ```{r, echo=TRUE, message=FALSE}
-#Call Team Totals data, select variables
 getNHL("teamtotals") %>% select(data.teamName, data.homeWins) %>% head(n=10)
 ```
 
+**Call Season Records data, select variables**
+
 ```{r, echo=TRUE, message=FALSE}
-#Call Season Records data, select variables
 getNHL("seasonrecs", 38) %>% select(data.franchiseName, data.homeWinStreak)
 ```
 
+**Call Goalie Records data, select variables**
+
 ```{r, echo=TRUE, message=FALSE}
-#Call Goalie Records data, select variables
 getNHL("goalierecs", 38) %>% select(data.firstName, data.lastName, data.wins)
 ```
 
+**Call Skater Records data, select variables**
+
 ```{r, echo=TRUE, message=FALSE}
-#Call Skater Records data, select variables
 getNHL("skaterrecs", 38) %>% select(data.firstName, data.lastName, data.points) %>% head(n=10)
 ```
 
 # Explore the NHL Data
 
+## Categorical and Numerical Summaries
+
+We will start with the Team Totals dataset, which includes total stats for each franchise.  We will limit to game type "2" for simplicity.
+
 ```{r, echo=TRUE, message=FALSE}
 t<-getNHL("teamtotals")
 t<-t[t$data.gameTypeId==2,]
+```
+
+We will first explore the win ratios (wins/games played). We will need to generate and assign some variables. We will create a categorical variable to indicate whether a franchise had a below average win ratio or at/above average.
+
+```{r, echo=TRUE, message=FALSE}
 t$WinRatio<-t$data.wins/t$data.gamesPlayed
 avgWins<-mean(t$WinRatio)
-t$PMinRatio<-t$data.penaltyMinutes/t$data.gamesPlayed
-avgPMins<-mean(t$PMinRatio)
 t$WinCat<-NA
 t$WinCat[t$WinRatio < avgWins] <- "Below Avg Wins"
 t$WinCat[t$WinRatio >= avgWins] <- "At/Above Avg Wins"
+```
+
+Let's take a look at the win ratio distributions overall and by win ratio category.
+
+**Overall**
+
+```{r, echo=TRUE, message=FALSE}
+summary(t$WinRatio)
+```
+
+**Below Average Win Ratio**
+
+```{r, echo=TRUE, message=FALSE}
+summary(t$WinRatio[t$WinRatio < avgWins])
+```
+
+**At/Above average Win Ratio**
+
+```{r, echo=TRUE, message=FALSE}
+summary(t$WinRatio[t$WinRatio >= avgWins])
+```
+
+We can create a second categorical variable using a ratio of penalty minutes (penalty min/games played). This will allow us to demonstrate a contingency table.
+
+```{r, echo=TRUE, message=FALSE}
+t$PMinRatio<-t$data.penaltyMinutes/t$data.gamesPlayed
+avgPMins<-mean(t$PMinRatio)
 t$PMinCat<-NA
 t$PMinCat[t$PMinRatio < avgPMins] <- "Below Avg Penalty Mins"
 t$PMinCat[t$PMinRatio >= avgPMins] <- "At/Above Avg Penalty Mins"
@@ -169,9 +208,47 @@ t1<-table(t$WinCat, t$PMinCat)
 knitr::kable(t1, row.names=TRUE, caption = "Avg Wins vs Avg Penality Min")
 ```
 
+It appears that the at/above avg win ratio group shares a higher proportion with the above avg penalty minute ratio group, and the opposite is observed for the below avg win ratio group.
+
+## Boxplots
+
+Now let's move on to some graphics! We will start with boxplots. First, we will stack the data so that we can look at home wins and home losses side by side.
+
 ```{r, echo=TRUE, message=FALSE}
-g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeWins)) + geom_boxplot()
-g
-g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeLosses)) + geom_boxplot()
+t$WinCat<-as.factor(t$WinCat)
+homewins<-t %>% select(data.franchiseId, WinCat, homeWL=data.homeWins, data.gamesPlayed)
+homewins<-data.frame(homewins)
+homewins$WLcat<-"Home Wins"
+homeloss<-t %>% select(data.franchiseId, WinCat, homeWL=data.homeLosses, data.gamesPlayed)
+homeloss<-data.frame(homeloss)
+homeloss$WLcat<-"Home Losses"
+homedata<-rbind(homewins, homeloss)
+homeWLratio<-homedata$homeWL/homedata$data.gamesPlayed
+```
+
+Generate boxplots of the home win/loss ratios, with the avg win level indicator variable as the facet wrap.
+
+```{r, echo=TRUE, message=FALSE}
+g <- ggplot(homedata, aes(x=WLcat, y=homeWLratio, fill=WLcat)) + geom_boxplot() + facet_wrap(homedata$WinCat)
 g
 ```
+
+It appears that the at/above avg win ratio group may have had more of a home field advantage than the below avg win ratio group, who's boxplot distributions are closer together between home wins and home losses.
+
+```{r, echo=TRUE, message=FALSE}
+rm(t)
+f<-getNHL("goalierecs", 6)
+f<-f[f$data.gamesPlayed>=200,]
+g <- ggplot(f, aes(x=data.lastName, y=data.shutouts)) + geom_col(fill="darkblue")
+g
+```
+
+```{r, echo=TRUE, message=FALSE}
+s<-getNHL("skaterrecs", 6)
+data.activePlayer<-as.factor(s$data.activePlayer)
+g <- ggplot(s, aes(x=data.assists, y=data.goals, color=data.activePlayer)) + geom_point()
+g
+g <- ggplot(s, aes(x=data.assists, y=data.goals)) + geom_point(color="darkblue") + facet_wrap(s$data.activePlayer)
+g
+```
+

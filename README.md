@@ -8,6 +8,8 @@ June 11, 2020
 -   [Function to Return Parsed Data from NHL API](#function-to-return-parsed-data-from-nhl-api)
     -   [Using the Function](#using-the-function)
 -   [Explore the NHL Data](#explore-the-nhl-data)
+    -   [Categorical and Numerical Summaries](#categorical-and-numerical-summaries)
+    -   [Boxplots](#boxplots)
 
 JSON overview
 =============
@@ -117,8 +119,9 @@ Using the Function
 
 The function can be used to call several NHL data sets from the API. Examples are illustrated below.
 
+**Call Franchise data, select variables**
+
 ``` r
-#Call Franchise data, select variables
 getNHL("franchise") %>% select(data.firstSeasonId, data.teamCommonName) %>% head(n=10)
 ```
 
@@ -136,8 +139,9 @@ getNHL("franchise") %>% select(data.firstSeasonId, data.teamCommonName) %>% head
     ##  9           19251926 Quakers            
     ## 10           19261927 Rangers
 
+**Call Team Totals data, select variables**
+
 ``` r
-#Call Team Totals data, select variables
 getNHL("teamtotals") %>% select(data.teamName, data.homeWins) %>% head(n=10)
 ```
 
@@ -155,8 +159,9 @@ getNHL("teamtotals") %>% select(data.teamName, data.homeWins) %>% head(n=10)
     ##  9 Pittsburgh Penguins          1116
     ## 10 Pittsburgh Penguins           111
 
+**Call Season Records data, select variables**
+
 ``` r
-#Call Season Records data, select variables
 getNHL("seasonrecs", 38) %>% select(data.franchiseName, data.homeWinStreak)
 ```
 
@@ -165,8 +170,9 @@ getNHL("seasonrecs", 38) %>% select(data.franchiseName, data.homeWinStreak)
     ##   <chr>                             <int>
     ## 1 Vegas Golden Knights                  8
 
+**Call Goalie Records data, select variables**
+
 ``` r
-#Call Goalie Records data, select variables
 getNHL("goalierecs", 38) %>% select(data.firstName, data.lastName, data.wins)
 ```
 
@@ -181,8 +187,9 @@ getNHL("goalierecs", 38) %>% select(data.firstName, data.lastName, data.wins)
     ## 6 Garret         Sparks                0
     ## 7 Robin          Lehner                3
 
+**Call Skater Records data, select variables**
+
 ``` r
-#Call Skater Records data, select variables
 getNHL("skaterrecs", 38) %>% select(data.firstName, data.lastName, data.points) %>% head(n=10)
 ```
 
@@ -203,16 +210,60 @@ getNHL("skaterrecs", 38) %>% select(data.firstName, data.lastName, data.points) 
 Explore the NHL Data
 ====================
 
+Categorical and Numerical Summaries
+-----------------------------------
+
+We will start with the Team Totals dataset, which includes total stats for each franchise. We will limit to game type "2" for simplicity.
+
 ``` r
 t<-getNHL("teamtotals")
 t<-t[t$data.gameTypeId==2,]
+```
+
+We will first explore the win ratios (wins/games played). We will need to generate and assign some variables. We will create a categorical variable to indicate whether a franchise had a below average win ratio or at/above average.
+
+``` r
 t$WinRatio<-t$data.wins/t$data.gamesPlayed
 avgWins<-mean(t$WinRatio)
-t$PMinRatio<-t$data.penaltyMinutes/t$data.gamesPlayed
-avgPMins<-mean(t$PMinRatio)
 t$WinCat<-NA
 t$WinCat[t$WinRatio < avgWins] <- "Below Avg Wins"
 t$WinCat[t$WinRatio >= avgWins] <- "At/Above Avg Wins"
+```
+
+Let's take a look at the win ratio distributions overall and by win ratio category.
+
+**Overall**
+
+``` r
+summary(t$WinRatio)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ## 0.09091 0.36957 0.43911 0.40273 0.46816 0.56596
+
+**Below Average Win Ratio**
+
+``` r
+summary(t$WinRatio[t$WinRatio < avgWins])
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ## 0.09091 0.23542 0.32473 0.29819 0.37302 0.39583
+
+**At/Above average Win Ratio**
+
+``` r
+summary(t$WinRatio[t$WinRatio >= avgWins])
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##  0.4150  0.4422  0.4604  0.4637  0.4768  0.5660
+
+We can create a second categorical variable using a ratio of penalty minutes (penalty min/games played). This will allow us to demonstrate a contingency table.
+
+``` r
+t$PMinRatio<-t$data.penaltyMinutes/t$data.gamesPlayed
+avgPMins<-mean(t$PMinRatio)
 t$PMinCat<-NA
 t$PMinCat[t$PMinRatio < avgPMins] <- "Below Avg Penalty Mins"
 t$PMinCat[t$PMinRatio >= avgPMins] <- "At/Above Avg Penalty Mins"
@@ -225,16 +276,58 @@ knitr::kable(t1, row.names=TRUE, caption = "Avg Wins vs Avg Penality Min")
 | At/Above Avg Wins |                         24|                      12|
 | Below Avg Wins    |                          5|                      16|
 
+It appears that the at/above avg win ratio group shares a higher proportion with the above avg penalty minute ratio group, and the opposite is observed for the below avg win ratio group.
+
+Boxplots
+--------
+
+Now let's move on to some graphics! We will start with boxplots. First, we will stack the data so that we can look at home wins and home losses side by side.
+
 ``` r
-g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeWins)) + geom_boxplot()
+t$WinCat<-as.factor(t$WinCat)
+homewins<-t %>% select(data.franchiseId, WinCat, homeWL=data.homeWins, data.gamesPlayed)
+homewins<-data.frame(homewins)
+homewins$WLcat<-"Home Wins"
+homeloss<-t %>% select(data.franchiseId, WinCat, homeWL=data.homeLosses, data.gamesPlayed)
+homeloss<-data.frame(homeloss)
+homeloss$WLcat<-"Home Losses"
+homedata<-rbind(homewins, homeloss)
+homeWLratio<-homedata$homeWL/homedata$data.gamesPlayed
+```
+
+Generate boxplots of the home win/loss ratios, with the avg win level indicator variable as the facet wrap.
+
+``` r
+g <- ggplot(homedata, aes(x=WLcat, y=homeWLratio, fill=WLcat)) + geom_boxplot() + facet_wrap(homedata$WinCat)
 g
 ```
 
-![](st558proj1_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](st558proj1_files/figure-markdown_github/unnamed-chunk-14-1.png)
+
+It appears that the at/above avg win ratio group may have had more of a home field advantage than the below avg win ratio group, who's boxplot distributions are closer together between home wins and home losses.
 
 ``` r
-g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeLosses)) + geom_boxplot()
+rm(t)
+f<-getNHL("goalierecs", 6)
+f<-f[f$data.gamesPlayed>=200,]
+g <- ggplot(f, aes(x=data.lastName, y=data.shutouts)) + geom_col(fill="darkblue")
 g
 ```
 
-![](st558proj1_files/figure-markdown_github/unnamed-chunk-8-2.png)
+![](st558proj1_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+``` r
+s<-getNHL("skaterrecs", 6)
+data.activePlayer<-as.factor(s$data.activePlayer)
+g <- ggplot(s, aes(x=data.assists, y=data.goals, color=data.activePlayer)) + geom_point()
+g
+```
+
+![](st558proj1_files/figure-markdown_github/unnamed-chunk-16-1.png)
+
+``` r
+g <- ggplot(s, aes(x=data.assists, y=data.goals)) + geom_point(color="darkblue") + facet_wrap(s$data.activePlayer)
+g
+```
+
+![](st558proj1_files/figure-markdown_github/unnamed-chunk-16-2.png)
