@@ -144,7 +144,7 @@ getNHL <- function(str1=NULL, id=NULL) {
 
 ```
 
-## Using the Function
+## Using the `getNHL` Function
 
 The function can be used to call several NHL data sets from the API. Examples are illustrated below.
 
@@ -270,7 +270,7 @@ g <- ggplot(f, aes(x=data.lastName, y=data.shutouts)) + geom_col(fill="darkblue"
 g
 ```
 
-The column graph is a nice way to get an overall sense of this data. We can see that of these goalies (who have played 200 or more games), Thomspon has the most shut outs, followed by Rask and Brimsek.
+The column graph is a nice way to get an overall sense of this data. We can see that of these goalies (who have played 200 or more games), Thompson has the most shut outs, followed by Rask and Brimsek.
 
 ## Scatter Plots
 

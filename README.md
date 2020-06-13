@@ -6,7 +6,7 @@ June 11, 2020
 -   [JSON overview](#json-overview)
 -   [Reading JSON Data into R](#reading-json-data-into-r)
 -   [Function to Return Parsed Data from NHL API](#function-to-return-parsed-data-from-nhl-api)
-    -   [Using the Function](#using-the-function)
+    -   [Using the `getNHL` Function](#using-the-getnhl-function)
 -   [Explore the NHL Data](#explore-the-nhl-data)
     -   [Categorical and Numerical Summaries](#categorical-and-numerical-summaries)
     -   [Boxplots](#boxplots)
@@ -138,8 +138,8 @@ getNHL <- function(str1=NULL, id=NULL) {
 }
 ```
 
-Using the Function
-------------------
+Using the `getNHL` Function
+---------------------------
 
 The function can be used to call several NHL data sets from the API. Examples are illustrated below.
 
@@ -345,7 +345,7 @@ g
 
 ![](st558proj1_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
-The column graph is a nice way to get an overall sense of this data. We can see that of these goalies (who have played 200 or more games), Thomspon has the most shut outs, followed by Rask and Brimsek.
+The column graph is a nice way to get an overall sense of this data. We can see that of these goalies (who have played 200 or more games), Thompson has the most shut outs, followed by Rask and Brimsek.
 
 Scatter Plots
 -------------
