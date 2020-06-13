@@ -16,6 +16,7 @@ library("tidyr")
 library("dplyr")
 library("stringi")
 library("DT")
+library("ggplot2")
 ```
 
 
@@ -147,4 +148,30 @@ getNHL("goalierecs", 38) %>% select(data.firstName, data.lastName, data.wins)
 ```{r, echo=TRUE, message=FALSE}
 #Call Skater Records data, select variables
 getNHL("skaterrecs", 38) %>% select(data.firstName, data.lastName, data.points) %>% head(n=10)
+```
+
+# Explore the NHL Data
+
+```{r, echo=TRUE, message=FALSE}
+t<-getNHL("teamtotals")
+t<-t[t$data.gameTypeId==2,]
+t$WinRatio<-t$data.wins/t$data.gamesPlayed
+avgWins<-mean(t$WinRatio)
+t$PMinRatio<-t$data.penaltyMinutes/t$data.gamesPlayed
+avgPMins<-mean(t$PMinRatio)
+t$WinCat<-NA
+t$WinCat[t$WinRatio < avgWins] <- "Below Avg Wins"
+t$WinCat[t$WinRatio >= avgWins] <- "At/Above Avg Wins"
+t$PMinCat<-NA
+t$PMinCat[t$PMinRatio < avgPMins] <- "Below Avg Penalty Mins"
+t$PMinCat[t$PMinRatio >= avgPMins] <- "At/Above Avg Penalty Mins"
+t1<-table(t$WinCat, t$PMinCat)
+knitr::kable(t1, row.names=TRUE, caption = "Avg Wins vs Avg Penality Min")
+```
+
+```{r, echo=TRUE, message=FALSE}
+g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeWins)) + geom_boxplot()
+g
+g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeLosses)) + geom_boxplot()
+g
 ```

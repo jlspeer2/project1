@@ -7,6 +7,7 @@ June 11, 2020
 -   [Reading JSON Data into R](#reading-json-data-into-r)
 -   [Function to Return Parsed Data from NHL API](#function-to-return-parsed-data-from-nhl-api)
     -   [Using the Function](#using-the-function)
+-   [Explore the NHL Data](#explore-the-nhl-data)
 
 JSON overview
 =============
@@ -198,3 +199,42 @@ getNHL("skaterrecs", 38) %>% select(data.firstName, data.lastName, data.points) 
     ##  8 Reilly         Smith                 167
     ##  9 Tomas          Tatar                   6
     ## 10 Brandon        Pirri                  23
+
+Explore the NHL Data
+====================
+
+``` r
+t<-getNHL("teamtotals")
+t<-t[t$data.gameTypeId==2,]
+t$WinRatio<-t$data.wins/t$data.gamesPlayed
+avgWins<-mean(t$WinRatio)
+t$PMinRatio<-t$data.penaltyMinutes/t$data.gamesPlayed
+avgPMins<-mean(t$PMinRatio)
+t$WinCat<-NA
+t$WinCat[t$WinRatio < avgWins] <- "Below Avg Wins"
+t$WinCat[t$WinRatio >= avgWins] <- "At/Above Avg Wins"
+t$PMinCat<-NA
+t$PMinCat[t$PMinRatio < avgPMins] <- "Below Avg Penalty Mins"
+t$PMinCat[t$PMinRatio >= avgPMins] <- "At/Above Avg Penalty Mins"
+t1<-table(t$WinCat, t$PMinCat)
+knitr::kable(t1, row.names=TRUE, caption = "Avg Wins vs Avg Penality Min")
+```
+
+|                   |  At/Above Avg Penalty Mins|  Below Avg Penalty Mins|
+|-------------------|--------------------------:|-----------------------:|
+| At/Above Avg Wins |                         24|                      12|
+| Below Avg Wins    |                          5|                      16|
+
+``` r
+g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeWins)) + geom_boxplot()
+g
+```
+
+![](st558proj1_files/figure-markdown_github/unnamed-chunk-8-1.png)
+
+``` r
+g <- ggplot(t, aes(x=t$WinCat, y=t$data.homeLosses)) + geom_boxplot()
+g
+```
+
+![](st558proj1_files/figure-markdown_github/unnamed-chunk-8-2.png)
